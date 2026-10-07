@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>FP | Lucila Pastore | Founder Delegation Audit</title>
+<meta name="description" content="Interactive audit: see which of your weekly tasks a Right Hand should own. Runs in your browser, nothing is stored or sent.">
+<style>
+:root{--bg:#0a0d0c;--card:#121816;--line:#223029;--text:#f2f5f4;--mut:#9aa8a2;--acc:#10b981;--acc2:#34d399;--warn:#f59e0b}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 "DM Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+h1,h2,h3{font-family:"Plus Jakarta Sans","DM Sans",system-ui,sans-serif;line-height:1.15;margin:0 0 .5em}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+header{padding:28px 0 8px}
+.tag{display:inline-block;color:var(--acc2);border:1px solid var(--line);border-radius:99px;padding:3px 12px;font-size:13px}
+h1{font-size:clamp(28px,6vw,44px);margin-top:14px}
+.lead{color:var(--mut);font-size:18px;max-width:60ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:16px 0}
+.btn{display:inline-block;background:var(--acc);color:#04130d;border:0;border-radius:10px;padding:13px 22px;font:700 16px inherit;cursor:pointer;text-decoration:none}
+.btn:hover{background:var(--acc2)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.hide{display:none!important}
+.progress{height:6px;background:var(--line);border-radius:9px;overflow:hidden;margin:18px 0}
+.progress i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+.task{border-top:1px solid var(--line);padding:14px 0}
+.task:first-of-type{border-top:0}
+.task b{display:block}
+.task small{color:var(--mut)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px}
+select,input[type=number]{background:#0d1311;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg input:checked+span{color:var(--acc2)}
+.seg label:has(input:checked){border-color:var(--acc);background:#0f2a21}
+.seg label:has(input:focus-visible){outline:2px solid var(--acc2)}
+.big{font:800 clamp(40px,9vw,64px) "Plus Jakarta Sans",sans-serif;color:var(--acc2);line-height:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.stat{background:#0d1311;border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat span{display:block;color:var(--mut);font-size:13px}
+.stat strong{font:700 24px "Plus Jakarta Sans",sans-serif}
+ul.clean{list-style:none;padding:0;margin:0}
+ul.clean li{padding:9px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}
+ul.clean li:first-child{border-top:0}
+.pill{align-self:center;flex-shrink:0;font-size:12px;border-radius:99px;padding:2px 10px;border:1px solid var(--line);color:var(--mut);white-space:nowrap}
+.pill.now{color:#04130d;background:var(--acc);border-color:var(--acc)}
+.pill.soon{color:var(--warn);border-color:var(--warn)}
+footer{color:var(--mut);font-size:13px;padding:28px 0 40px;border-top:1px solid var(--line);margin-top:32px}
+.note{color:var(--mut);font-size:14px}
+@media print{body{background:#fff;color:#000}.card,.stat{background:#fff;border-color:#bbb}.btn,.progress,.noprint{display:none!important}.big{color:#067a55}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <span class="tag">Delegation Audit &middot; about 3 minutes</span>
+  <h1>Which of your weekly tasks should a Right Hand own?</h1>
+  <p class="lead">Check the work that fills your week. You get a personal handoff map: what to hand off first, how many hours that gives back, and what those hours are worth.</p>
+</header>
+
+<main>
+<section id="intro" class="card">
+  <p><b>How it works.</b> Mark the tasks you touch, say how many hours a week they take, and whether someone else could do them. No writing, no sign-up inside the tool.</p>
+  <p class="note">Everything is calculated in your browser. Nothing you enter is stored or sent anywhere.</p>
+  <button class="btn" id="start">Start the audit</button>
+</section>
+
+<section id="quiz" class="hide">
+  <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+  <div class="card">
+    <h2 id="qtitle"></h2>
+    <p class="note" id="qhelp"></p>
+    <div id="tasks"></div>
+    <div class="row noprint" style="margin-top:18px">
+      <button class="btn ghost" id="back">Back</button>
+      <button class="btn" id="next">Next</button>
+    </div>
+  </div>
+</section>
+
+<section id="result" class="hide" aria-live="polite">
+  <div class="card">
+    <p class="note" style="margin:0">Your result</p>
+    <div class="big" id="hrs">0</div>
+    <p id="hrsText"></p>
+    <div class="grid" style="margin-top:14px">
+      <div class="stat"><span>Share of your tracked hours</span><strong id="pct">0%</strong></div>
+      <div class="stat"><span>Hours back per year (48 working weeks)</span><strong id="yr">0</strong></div>
+      <div class="stat"><span>Value of those hours per month</span><strong id="val">$0</strong></div>
+    </div>
+    <div class="row noprint" style="margin-top:14px">
+      <label for="rate">What is one hour of your time worth (USD)?</label>
+      <input id="rate" type="number" min="10" max="2000" step="10" value="100">
+    </div>
+    <p class="note">Value = delegable hours &times; 52 &divide; 12 &times; your hourly figure. "Not sure" tasks count at half. It is an estimate, not a promise.</p>
+  </div>
+
+  <div class="card">
+    <h2>Your handoff map</h2>
+    <ul class="clean" id="plan"></ul>
+  </div>
+
+  <div class="card">
+    <h2>Where your time leaks most</h2>
+    <p id="leak"></p>
+  </div>
+
+  <div class="card">
+    <h2>Your next step</h2>
+    <p>If this map looks like your week, the next step is a short conversation to see whether a Right Hand fits your business.</p>
+    <p class="note" id="ctaNote"></p>
+    <div class="row noprint">
+      <a class="btn hide" id="cta" href="#">Continue to the short qualifying form</a>
+      <button class="btn ghost" id="print">Save my report (PDF)</button>
+      <button class="btn ghost" id="copy">Copy as text</button>
+      <button class="btn ghost" id="again">Start over</button>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <p>Bootcamp final-project submission &middot; Not an official Pareto Talent page. Built by Lucila Pastore for the Pareto Talent Executive Assistant Bootcamp.</p>
+</footer>
+</div>
+
+<script>
+// Set after the funnel is built in GoHighLevel. If empty, the button stays hidden.
+var QUALIFY_URL = "";
+
+var STEPS = [
+ {t:"Communication and coordination", h:"Which of these take your time? Tick how many hours a week and whether someone else could do it.", tasks:[
+  ["inbox","Inbox triage and replies","Reading, sorting, drafting answers"],
+  ["cal","Calendar and scheduling","Booking, moving, time zones"],
+  ["mtg","Meeting prep and follow-ups","Agendas, notes, action items"],
+  ["chase","Chasing the team and project follow-ups","Status checks, reminders"],
+  ["esc","Client or customer escalations triage","Deciding who handles what"]]},
+ {t:"Operations and admin", h:"The behind-the-scenes work that keeps the business moving.", tasks:[
+  ["travel","Travel and logistics","Flights, hotels, itineraries"],
+  ["fin","Invoicing, expenses and payment admin","Chasing, filing, reconciling requests"],
+  ["rep","Weekly reporting and numbers","Pulling and formatting the same report"],
+  ["crm","CRM and data entry","Updating records, tags, pipelines"],
+  ["appr","Approvals and sign-offs that follow clear rules","Routine yes or no decisions"],
+  ["onb","Onboarding clients or team members","Checklists, accounts, welcome emails"]]},
+ {t:"Support work", h:"Useful tasks that rarely need the founder's brain.", tasks:[
+  ["hire","Hiring admin","Scheduling interviews, first screens"],
+  ["soc","Content and social scheduling","Formatting, posting, calendars"],
+  ["res","Research and vendor comparison","Options, quotes, shortlists"],
+  ["doc","Document and slide prep","First drafts, formatting, cleanup"],
+  ["life","Personal errands and life admin","Appointments, orders, bookings"]]}
+];
+var LEAK = {
+ comm:["inbox","cal","mtg","chase","esc"],
+ ops:["travel","fin","rep","crm","appr","onb"],
+ sup:["hire","soc","res","doc","life"]};
+var LEAKTXT = {
+ comm:"Communication and coordination. Your attention is being split by messages and scheduling. This is usually the fastest win: one person owning your inbox and calendar changes the whole week.",
+ ops:"Operations and admin. Repeatable processes are running through you. These are ideal for a documented routine, and the first thing a Right Hand can take over.",
+ sup:"Support work. Useful tasks are eating focus time. Batch them and hand them off with clear examples of what good looks like."};
+
+var state = {}; // id -> {h:number, o:'only'|'could'|'unsure'}
+var step = -1;
+var $ = function(id){return document.getElementById(id)};
+var NAMES = {}; STEPS.forEach(function(s){s.tasks.forEach(function(t){NAMES[t[0]]=t[1]; state[t[0]]={h:0,o:"only"}})});
+
+function show(id){["intro","quiz","result"].forEach(function(x){$(x).classList.toggle("hide",x!==id)}); window.scrollTo({top:0,behavior:"smooth"})}
+
+function render(){
+  var s = STEPS[step];
+  $("qtitle").textContent = (step+1)+" of "+STEPS.length+": "+s.t;
+  $("qhelp").textContent = s.h;
+  $("bar").style.width = ((step)/STEPS.length*100)+"%";
+  $("next").textContent = step===STEPS.length-1 ? "See my result" : "Next";
+  var box = $("tasks"); box.innerHTML="";
+  s.tasks.forEach(function(t){
+    var id=t[0], d=document.createElement("div"); d.className="task";
+    var opts=[0,1,2,3,4,5,6,8,10].map(function(n){return '<option value="'+n+'"'+(state[id].h===n?" selected":"")+'>'+(n===0?"0 (not me)":n+" h/week")+'</option>'}).join("");
+    var rb=function(v,l){return '<label><input type="radio" name="o_'+id+'" value="'+v+'"'+(state[id].o===v?" checked":"")+'><span>'+l+'</span></label>'};
+    d.innerHTML='<b>'+t[1]+'</b><small>'+t[2]+'</small><div class="row"><label for="h_'+id+'" class="note">Time</label><select id="h_'+id+'">'+opts+'</select><div class="seg" role="radiogroup" aria-label="Who could do '+t[1]+'">'+rb("only","Only I can")+rb("could","Someone else could")+rb("unsure","Not sure")+'</div></div>';
+    box.appendChild(d);
+    d.querySelector("select").onchange=function(e){state[id].h=+e.target.value};
+    d.querySelectorAll("input[type=radio]").forEach(function(r){r.onchange=function(e){state[id].o=e.target.value}});
+  });
+}
+
+function compute(){
+  var rows=[], tracked=0, deleg=0, leak={comm:0,ops:0,sup:0};
+  Object.keys(state).forEach(function(id){
+    var x=state[id]; if(!x.h) return;
+    tracked+=x.h;
+    var w = x.o==="could"?1:(x.o==="unsure"?0.5:0);
+    var eff=x.h*w; deleg+=eff;
+    Object.keys(LEAK).forEach(function(k){ if(LEAK[k].indexOf(id)>-1) leak[k]+=eff });
+    rows.push({id:id,name:NAMES[id],h:x.h,o:x.o,eff:eff});
+  });
+  return {rows:rows,tracked:tracked,deleg:deleg,leak:leak};
+}
+
+function fmt(n){return (Math.round(n*10)/10).toString()}
+
+function paint(){
+  var c=compute(), rate=Math.max(0,+$("rate").value||0);
+  $("hrs").textContent=fmt(c.deleg)+" h";
+  $("hrsText").textContent = c.deleg>0
+    ? "per week that someone else could take off your desk, out of "+fmt(c.tracked)+" hours you tracked."
+    : "You marked every task as yours alone. That is a valid answer, but try again if some of these only feel urgent, not personal.";
+  $("pct").textContent = c.tracked? Math.round(c.deleg/c.tracked*100)+"%":"0%";
+  $("yr").textContent = Math.round(c.deleg*48).toLocaleString("en-US")+" h";
+  $("val").textContent = "$"+Math.round(c.deleg*52/12*rate).toLocaleString("en-US");
+  var list=c.rows.filter(function(r){return r.eff>0}).sort(function(a,b){return b.eff-a.eff});
+  var plan=$("plan"); plan.innerHTML="";
+  if(!list.length){plan.innerHTML="<li>No delegable tasks marked yet.</li>"}
+  list.forEach(function(r,i){
+    var tag = i<3 ? ["now","Hand off first"] : (i<6 ? ["soon","Within a month"] : ["","Later"]);
+    var li=document.createElement("li");
+    li.innerHTML="<span>"+r.name+" <span class='note'>("+r.h+" h/week"+(r.o==="unsure"?", not sure":"")+")</span></span><span class='pill "+tag[0]+"'>"+tag[1]+"</span>";
+    plan.appendChild(li);
+  });
+  var kept=c.rows.filter(function(r){return r.eff===0});
+  if(kept.length){var li=document.createElement("li");li.innerHTML="<span>Keep with you: "+kept.map(function(r){return r.name}).join(", ")+"</span><span class='pill'>Yours</span>";plan.appendChild(li)}
+  var best=Object.keys(c.leak).sort(function(a,b){return c.leak[b]-c.leak[a]})[0];
+  $("leak").textContent = c.leak[best]>0 ? LEAKTXT[best] : "Nothing stands out yet. Run the audit again after tracking a normal week.";
+  $("ctaNote").textContent = QUALIFY_URL ? "It takes under a minute and tells us if a call makes sense for both sides." : "";
+  $("cta").classList.toggle("hide",!QUALIFY_URL);
+  if(QUALIFY_URL) $("cta").href=QUALIFY_URL;
+  return c;
+}
+
+function asText(){
+  var c=compute(), rate=Math.max(0,+$("rate").value||0);
+  var t="Founder Delegation Audit\n\nDelegable hours per week: "+fmt(c.deleg)+" of "+fmt(c.tracked)+" tracked\nValue per month at $"+rate+"/h: $"+Math.round(c.deleg*52/12*rate)+"\n\nHandoff map:\n";
+  c.rows.filter(function(r){return r.eff>0}).sort(function(a,b){return b.eff-a.eff}).forEach(function(r,i){t+=(i+1)+". "+r.name+" ("+r.h+" h/week)\n"});
+  return t;
+}
+
+$("start").onclick=function(){step=0;show("quiz");render()};
+$("next").onclick=function(){ if(step<STEPS.length-1){step++;render();window.scrollTo({top:0,behavior:"smooth"})} else {paint();show("result")} };
+$("back").onclick=function(){ if(step>0){step--;render()} else show("intro") };
+$("rate").oninput=paint;
+$("print").onclick=function(){window.print()};
+$("copy").onclick=function(){var b=$("copy");var done=function(){b.textContent="Copied";setTimeout(function(){b.textContent="Copy as text"},1500)};if(navigator.clipboard){navigator.clipboard.writeText(asText()).then(done,function(){})}};
+$("again").onclick=function(){Object.keys(state).forEach(function(k){state[k]={h:0,o:"only"}});step=-1;show("intro")};
+</script>
+</body>
+</html>
